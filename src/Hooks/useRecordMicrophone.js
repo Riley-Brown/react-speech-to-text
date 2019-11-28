@@ -51,53 +51,35 @@ export default function useRecordMicrophone({
           handleTimeout({ rec, stream });
         })
         .catch(err => {
+          console.log(err);
           setError('Microphone access was denied');
         });
     }
   };
 
-  // Chrome Speech Recognition API: Only
-  // supported on Chrome browsers
+  // Chrome Speech Recognition API:
+  // Only supported on Chrome browsers
   const chromeSpeechRecognition = () => {
     // Continuous recording after stopped speaking event
     if (continuous) recognition.continuous = true;
 
+    // start recognition
+    setIsRecording(true);
+    recognition.start();
+
     // speech successfully translated into text
     recognition.onresult = e => {
-      console.log('got a result!');
       if (e.results) {
-        console.log(e.results[e.results.length - 1]);
         setResults(prevResults => [
           ...prevResults,
           e.results[e.results.length - 1][0].transcript
         ]);
-        // onSubmit(e, e.results[e.results.length - 1][0].transcript);
       }
     };
 
-    recognition.onaudiostart = () => {
-      console.log('started capturing audio');
-    };
-
     recognition.onaudioend = () => {
-      console.log('stopped capturing audio');
       setIsRecording(false);
     };
-
-    recognition.onend = () => {
-      console.log('audio capturing timed out');
-      setIsRecording(false);
-    };
-
-    recognition.onabort = () => {
-      console.log('stopping');
-    };
-
-    recognition.onnomatch = e => console.log('no match!', e);
-    recognition.onmatch = e => console.log('got a match!', e);
-
-    setIsRecording(true);
-    recognition.start();
   };
 
   const stopCapturing = () => {
