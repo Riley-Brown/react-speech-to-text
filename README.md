@@ -18,6 +18,36 @@ Also used is `hark.js` for detecting start and stopped speech events during cros
 
 Both `recorder.js` and `hark.js` can be found in the `Public` folder.
 
+# Basic Hook usage
+
+```JSX
+  const {
+    startCapturing,
+    stopCapturing,
+    isRecording,
+    results,
+    error
+  } = useSpeechToText({
+    timeout: 10000,
+    continuous: true
+  });
+
+  if (error) return <p>Web Speech API is not available in this browser 🤷‍</p>;
+
+  return (
+    <>
+      <button onClick={isRecording ? stopCapturing : startCapturing}>
+        {isRecording ? 'Stop Recording' : 'Start Recording'}
+      </button>
+      <ul>
+        {results.map(result => (
+          <li>{result}</li>
+        ))}
+      </ul>
+    </>
+  );
+```
+
 # Arguments
 
 Arguments passed to `useSpeechToText()` invocation
