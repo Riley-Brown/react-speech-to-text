@@ -104,6 +104,7 @@ export default function useRecordMicrophone({
     return rec;
   };
 
+  // Speech events for cross browser functionality
   const handleSpeechEvents = ({ stream }) => {
     const harkOptions = {};
     const speechEvents = window.hark(stream, harkOptions);
