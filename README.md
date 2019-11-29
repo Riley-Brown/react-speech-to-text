@@ -86,7 +86,7 @@ API key used for Google Cloud Speech to text API for cross browser speech to tex
 
 Values returns by the `useRecordMicrophone()` invocation
 
-ex: `const { results } = useRecordMicrophone()
+ex: `const { results } = useRecordMicrophone()`
 
 ### `results`
 
