@@ -137,7 +137,7 @@ export default function useRecordMicrophone({
 
           // Send base64 data string to Google Cloud API
           const response = await fetch(
-            `https://speech.googleapis.com/v1/speech:recognize?key=${process.env.REACT_APP_API_KEY}`,
+            `https://speech.googleapis.com/v1/speech:recognize?key=${googleApiKey}`,
             {
               method: 'POST',
               headers: {
