@@ -17,7 +17,6 @@ export default function useRecordMicrophone({
   const [audioStream, setAudioStream] = useState();
   const [isRecording, setIsRecording] = useState(false);
   const [recorder, setRecorder] = useState(null);
-  const [recordingTimeout, setRecordingTimeout] = useState(null);
   const [results, setResults] = useState([]);
   const [error, setError] = useState(null);
 
@@ -41,14 +40,8 @@ export default function useRecordMicrophone({
         .then(stream => {
           setIsRecording(true);
 
-          // starts recorder.js
-          const rec = createAudioContext({ stream });
-
           // Initialize hark for start and stop speech events
-          handleSpeechEvents({ stream, rec });
-
-          // Clear audio capturing after timeout amount
-          handleTimeout({ rec, stream });
+          handleSpeechEvents({ stream });
         })
         .catch(err => {
           console.log(err);
@@ -76,7 +69,7 @@ export default function useRecordMicrophone({
         ]);
       }
     };
-
+    // Audio stopped recording or timed out
     recognition.onaudioend = () => {
       setIsRecording(false);
     };
@@ -85,12 +78,19 @@ export default function useRecordMicrophone({
   const stopCapturing = () => {
     if (!crossBrowser && isRecording) {
       recognition.stop();
+    } else {
+      recorder.stop();
+      audioStream.getAudioTracks()[0].stop();
+      setIsRecording(false);
     }
   };
 
   const createAudioContext = ({ stream }) => {
+    console.log(stream);
     // Create new audio context source
     let input = audioContext.createMediaStreamSource(stream);
+
+    setAudioStream(stream);
 
     // Start new Recorder instance
     const Recorder = window.Recorder;
@@ -103,31 +103,93 @@ export default function useRecordMicrophone({
     return rec;
   };
 
-  const handleSpeechEvents = ({ stream, rec }) => {
-    const speechEvents = window.hark(stream);
+  const handleSpeechEvents = ({ stream }) => {
+    const harkOptions = {};
+    const speechEvents = window.hark(stream, harkOptions);
+
+    // Starts Recorder.js recording
+    let rec = createAudioContext({ stream });
+    rec.record();
+
+    // Create timeout to stop recording
+    let timeoutId = handleTimeout({ stream, rec });
+
     speechEvents.on('speaking', () => {
       if (onStartSpeaking) onStartSpeaking();
-      clearInterval(recordingTimeout);
+
+      // clear timeout
+      clearTimeout(timeoutId);
     });
 
-    if (onStoppedSpeaking) {
-      speechEvents.on('stopped_speaking', () => {
-        if (onStoppedSpeaking) onStoppedSpeaking();
-        rec.stop();
-        handleTimeout({ stream, rec });
+    speechEvents.on('stopped_speaking', () => {
+      if (onStoppedSpeaking) onStoppedSpeaking();
+      rec.stop();
+
+      // convert audio to WAV blob
+      rec.exportWAV(async blob => {
+        const reader = new FileReader();
+        reader.readAsDataURL(blob);
+        reader.onloadend = async () => {
+          const base64data = reader.result;
+          // gets raw base64 data
+          audio.content = base64data.substr(base64data.indexOf(',') + 1);
+
+          // Send base64 data string to Google Cloud API
+          const response = await fetch(
+            `https://speech.googleapis.com/v1/speech:recognize?key=${process.env.REACT_APP_API_KEY}`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(data)
+            }
+          );
+          const responseJson = await response.json();
+
+          // Update results state with transcribed text
+          if (responseJson.results.length > 0) {
+            console.log(responseJson.results[0].alternatives[0].transcript);
+            setResults(prevResults => [
+              ...prevResults,
+              responseJson.results[0].alternatives[0].transcript
+            ]);
+          }
+        };
+
+        // Google Cloud Config
+        const audio = {};
+        const config = {
+          encoding: 'LINEAR16',
+          languageCode: 'en-US'
+        };
+        const data = {
+          config,
+          audio
+        };
       });
-    }
+
+      if (continuous) {
+        // create new audio context instance for continuous recording
+        rec = createAudioContext({ stream });
+
+        // Reassign timeout
+        timeoutId = handleTimeout({ stream, rec });
+      }
+    });
   };
 
   // Stop audio recording if timeout prop
   const handleTimeout = ({ rec, stream }) => {
     if (timeout) {
-      let clear = window.setTimeout(() => {
+      // Create and set new timeout
+      let timeoutId = window.setTimeout(() => {
         rec.stop();
         stream.getAudioTracks()[0].stop();
         setIsRecording(false);
-      }, timeout);
-      setRecordingTimeout(clear);
+      }, 10000);
+
+      return timeoutId;
     }
   };
 
