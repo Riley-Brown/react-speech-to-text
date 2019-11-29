@@ -10,9 +10,13 @@ The `SpeechRecognition` API does not require any additional setup or API keys, e
 
 If cross-browser support is needed, the `crossBrowser: true` prop must be passed. A [Google Cloud Speech-to-Text](https://cloud.google.com/speech-to-text/) API key is needed.
 
-This hook makes use of a customized version of `Recorder.js` for recording audio, down-sampling the audio `sampleRate` to <= 48000hz, and converting that audio to WAV format.
+This hook makes use of a customized version of `recorder.js` for recording audio, down-sampling the audio `sampleRate` to <= 48000hz, and converting that audio to WAV format.
 
-The hook then converts the WAV audio blob returned from `Recorder.js` and converts it into a `base64` string using the `FileReader` API. This is all needed in order to POST audio data to the Google Cloud Speech-to-Text REST API and get transcribed text returned all on the front-end.
+The hook then converts the WAV audio blob returned from `recorder.js` and converts it into a `base64` string using the `FileReader` API. This is all needed in order to POST audio data to the Google Cloud Speech-to-Text REST API and get transcribed text returned all on the front-end.
+
+Also used is `hark.js` for detecting start and stopped speech events during cross-browser mode. For non cross-browser Chrome only mode, Chrome's Speech Recognition API handles start and stop speech events automatically.
+
+Both `recorder.js` and `hark.js` can be found in the `Public` folder.
 
 # Arguments
 
