@@ -1,32 +1,21 @@
 import React from 'react';
 
-import useRecordMicrophone from 'Hooks/useRecordMicrophone';
+import useSpeechToText from 'Hooks/useSpeechToText';
 
 import micIcon from './mic.svg';
 
 import './App.css';
 
 export default function App() {
-  const onStartSpeaking = () => {
-    console.log('started speaking eriuflhui4tlk');
-  };
-
-  const onStoppedSpeaking = () => {
-    console.log('stopped speaking');
-  };
-
   const {
     startCapturing,
     stopCapturing,
     isRecording,
     error,
     results
-  } = useRecordMicrophone({
-    onStartSpeaking,
-    onStoppedSpeaking,
-    timeout: 5000,
-    continuous: true,
-    crossBrowser: false
+  } = useSpeechToText({
+    timeout: 10000,
+    continuous: true
   });
 
   if (error) {

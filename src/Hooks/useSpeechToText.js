@@ -7,7 +7,7 @@ const SpeechRecognition =
   window.SpeechRecognition || window.webkitSpeechRecognition;
 const recognition = SpeechRecognition ? new SpeechRecognition() : null;
 
-export default function useRecordMicrophone({
+export default function useSpeechToText({
   onStartSpeaking,
   onStoppedSpeaking,
   timeout,
