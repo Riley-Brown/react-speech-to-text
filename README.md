@@ -168,3 +168,22 @@ export default function AnyComponent() {
   );
 }
 ```
+
+### Cross-Browser usage
+
+Same as above example with slightly different args
+
+```JSX
+  const {
+    startCapturing,
+    stopCapturing,
+    isRecording,
+    results,
+    error
+  } = useRecordMicrophone({
+    timeout: 10000,
+    continuous: true,
+    crossBrowser: true,
+    googleApiKey: YOUR_GOOGLE_CLOUD_API_KEY_HERE
+  });
+```
