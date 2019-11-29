@@ -20,7 +20,7 @@ Both `recorder.js` and `hark.js` can be found in the `Public` folder.
 
 # Arguments
 
-Arguments passed to `useRecordMicrophone()` invocation
+Arguments passed to `useSpeechToText()` invocation
 
 ### `timeout`
 
@@ -88,9 +88,9 @@ API key used for Google Cloud Speech to text API for cross browser speech to tex
 
 # Returned Values
 
-Values returns by the `useRecordMicrophone()` invocation
+Values returns by the `useSpeechToText()` invocation
 
-ex: `const { results } = useRecordMicrophone()`
+ex: `const { results } = useSpeechToText()`
 
 ### `results`
 
@@ -141,7 +141,7 @@ Error string if feature is not supported on current browser
 
 ```JSX
 import React from 'react';
-import useRecordMicrophone from 'Hooks/useRecordMicrophone';
+import useSpeechToText from 'Hooks/useSpeechToText';
 
 export default function AnyComponent() {
   const {
@@ -150,7 +150,7 @@ export default function AnyComponent() {
     isRecording,
     results,
     error
-  } = useRecordMicrophone({
+  } = useSpeechToText({
     timeout: 10000,
     continuous: true
   });
@@ -184,7 +184,7 @@ Same as above example with slightly different args
     isRecording,
     results,
     error
-  } = useRecordMicrophone({
+  } = useSpeechToText({
     timeout: 10000,
     continuous: true,
     crossBrowser: true,
