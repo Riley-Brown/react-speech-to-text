@@ -187,3 +187,14 @@ Same as above example with slightly different args
     googleApiKey: YOUR_GOOGLE_CLOUD_API_KEY_HERE
   });
 ```
+
+**Important**
+
+Cross-Browser mode makes use of a custom `recorder.js` and `hark.js` files for recording, converting audio streams, and speech events. These files must be included if planning to use cross browser mode.
+
+Both `recorder.js` and `hark.js` files can be found in the `Public` folder. These files are linked like normal script tags in `index.html`
+
+```HTML
+  <script src="./hark.js"></script>
+  <script src="./recorder.js"></script>
+```
