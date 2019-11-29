@@ -12,8 +12,9 @@ export default function useRecordMicrophone({
   onStoppedSpeaking,
   timeout,
   continuous,
-  crossBrowser
-}) {
+  crossBrowser,
+  googleApiKey
+} = {}) {
   const [audioStream, setAudioStream] = useState();
   const [isRecording, setIsRecording] = useState(false);
   const [recorder, setRecorder] = useState(null);
@@ -148,7 +149,7 @@ export default function useRecordMicrophone({
           const responseJson = await response.json();
 
           // Update results state with transcribed text
-          if (responseJson.results.length > 0) {
+          if (responseJson.results && responseJson.results.length > 0) {
             console.log(responseJson.results[0].alternatives[0].transcript);
             setResults(prevResults => [
               ...prevResults,
