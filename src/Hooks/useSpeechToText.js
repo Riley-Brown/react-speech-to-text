@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 const AudioContext = window.AudioContext || window.webkitAudioContext;
 const audioContext = new AudioContext();
@@ -20,6 +20,8 @@ export default function useSpeechToText({
   const [recorder, setRecorder] = useState(null);
   const [results, setResults] = useState([]);
   const [error, setError] = useState(null);
+
+  const timeoutId = useRef();
 
   useEffect(() => {
     if (!crossBrowser && !recognition) {
@@ -114,13 +116,13 @@ export default function useSpeechToText({
     rec.record();
 
     // Create timeout to stop recording
-    let timeoutId = handleTimeout({ stream, rec });
+    handleTimeout({ stream, rec });
 
     speechEvents.on('speaking', () => {
       if (onStartSpeaking) onStartSpeaking();
 
       // clear timeout
-      clearTimeout(timeoutId);
+      clearTimeout(timeoutId.current);
     });
 
     speechEvents.on('stopped_speaking', () => {
@@ -174,10 +176,10 @@ export default function useSpeechToText({
       if (continuous) {
         // create new audio context instance for continuous recording
         rec = createAudioContext({ stream });
-
-        // Reassign timeout
-        timeoutId = handleTimeout({ stream, rec });
       }
+
+      // New timeout after last speech detected
+      handleTimeout({ stream, rec });
     });
   };
 
@@ -185,13 +187,15 @@ export default function useSpeechToText({
   const handleTimeout = ({ rec, stream }) => {
     if (timeout) {
       // Create and set new timeout
-      let timeoutId = window.setTimeout(() => {
+      let newTimeoutId = window.setTimeout(() => {
         rec.stop();
         stream.getAudioTracks()[0].stop();
         setIsRecording(false);
-      }, 10000);
+      }, timeout);
 
-      return timeoutId;
+      timeoutId.current = newTimeoutId;
+
+      return newTimeoutId;
     }
   };
 
