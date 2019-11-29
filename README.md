@@ -26,7 +26,7 @@ Sets amount in milliseconds to stop recording microphone input after last detect
 
 - Type: `Number`
 - Required: `false`
-- Default: `null`
+- Default: `undefined`
 
 <hr>
 
@@ -36,7 +36,7 @@ Sets whether or not to keep recording microphone input after speech results are 
 
 - Type: `Boolean`
 - Required: `false`
-- Default: `false`
+- Default: `undefined`
 
 <hr>
 
@@ -46,7 +46,7 @@ Callback function invoked on speech detection event.
 
 - Type: `Func`
 - Required: `false`
-- Default: `null`
+- Default: `undefined`
 
 <hr>
 
@@ -56,7 +56,7 @@ Callback function invoked on speech stopped event.
 
 - Type: `Func`
 - Required: `false`
-- Default: `null`
+- Default: `undefined`
 
 <hr>
 
@@ -78,7 +78,7 @@ API key used for Google Cloud Speech to text API for cross browser speech to tex
 
 - Type: `String`
 - Required: `true` if `crossBrowser`
-- Default: `null`
+- Default: `undefined`
 
 <hr>
 
