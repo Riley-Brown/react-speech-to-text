@@ -15,7 +15,9 @@ export default function App() {
     results
   } = useSpeechToText({
     timeout: 10000,
-    continuous: true
+    continuous: true,
+    crossBrowser: true,
+    googleApiKey: process.env.REACT_APP_API_KEY
   });
 
   if (error) {
@@ -49,8 +51,8 @@ export default function App() {
         <img data-recording={isRecording} src={micIcon} alt="" />
       </button>
       <ul>
-        {results.map(result => (
-          <li>{result}</li>
+        {results.map((result, index) => (
+          <li key={index}>{result}</li>
         ))}
       </ul>
     </div>
