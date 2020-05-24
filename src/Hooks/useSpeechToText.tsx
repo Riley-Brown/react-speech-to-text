@@ -1,27 +1,44 @@
 import { useState, useEffect, useRef } from 'react';
 
-const AudioContext = window.AudioContext || window.webkitAudioContext;
+// Not sure about these 🤷‍♂️
+export interface RecorderTypes {
+  record: () => void;
+  start: () => Promise<MediaStream | undefined>;
+  stop: () => void;
+  exportWAV: (blob: any) => void;
+}
+
+const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
 const audioContext = new AudioContext();
 
 const SpeechRecognition =
-  window.SpeechRecognition || window.webkitSpeechRecognition;
+  window.SpeechRecognition || (window as any).webkitSpeechRecognition;
 const recognition = SpeechRecognition ? new SpeechRecognition() : null;
 
+export interface UseSpeechToTextTypes {
+  googleApiKey?: string;
+  continuous?: boolean;
+  crossBrowser?: boolean;
+  onStartSpeaking?: () => any;
+  onStoppedSpeaking?: () => any;
+  timeout?: number;
+}
+
 export default function useSpeechToText({
-  onStartSpeaking,
-  onStoppedSpeaking,
-  timeout,
+  googleApiKey,
   continuous,
   crossBrowser,
-  googleApiKey
-} = {}) {
-  const [audioStream, setAudioStream] = useState();
+  onStartSpeaking,
+  onStoppedSpeaking,
+  timeout
+}: UseSpeechToTextTypes) {
+  const [audioStream, setAudioStream] = useState<MediaStream>();
   const [isRecording, setIsRecording] = useState(false);
-  const [recorder, setRecorder] = useState(null);
-  const [results, setResults] = useState([]);
-  const [error, setError] = useState(null);
+  const [recorder, setRecorder] = useState<RecorderTypes>();
+  const [results, setResults] = useState<string[]>([]);
+  const [error, setError] = useState('');
 
-  const timeoutId = useRef();
+  const timeoutId = useRef<number>();
 
   useEffect(() => {
     if (!crossBrowser && !recognition) {
@@ -56,50 +73,53 @@ export default function useSpeechToText({
   // Chrome Speech Recognition API:
   // Only supported on Chrome browsers
   const chromeSpeechRecognition = () => {
-    // Continuous recording after stopped speaking event
-    if (continuous) recognition.continuous = true;
+    if (recognition) {
+      // Continuous recording after stopped speaking event
+      if (continuous) recognition.continuous = true;
 
-    // start recognition
-    setIsRecording(true);
-    recognition.start();
+      // start recognition
+      setIsRecording(true);
+      recognition.start();
 
-    // speech successfully translated into text
-    recognition.onresult = e => {
-      if (e.results) {
-        setResults(prevResults => [
-          ...prevResults,
-          e.results[e.results.length - 1][0].transcript
-        ]);
-      }
-    };
-    // Audio stopped recording or timed out
-    recognition.onaudioend = () => {
-      setIsRecording(false);
-    };
+      // speech successfully translated into text
+      recognition.onresult = e => {
+        if (e.results) {
+          setResults(prevResults => [
+            ...prevResults,
+            e.results[e.results.length - 1][0].transcript
+          ]);
+        }
+      };
+
+      // Audio stopped recording or timed out
+      recognition.onaudioend = () => {
+        setIsRecording(false);
+      };
+    }
   };
 
   const stopCapturing = () => {
-    if (!crossBrowser && isRecording) {
+    if (!crossBrowser && isRecording && recognition) {
       recognition.stop();
-    } else {
+    } else if (recorder && audioStream) {
       recorder.stop();
       audioStream.getAudioTracks()[0].stop();
       setIsRecording(false);
     }
   };
 
-  const createAudioContext = ({ stream }) => {
-    console.log(stream);
+  const createAudioContext = ({ stream }: { stream: MediaStream }) => {
     // Create new audio context source
     let input = audioContext.createMediaStreamSource(stream);
 
     setAudioStream(stream);
 
     // Start new Recorder instance
-    const Recorder = window.Recorder;
-    let rec = new Recorder(input, {
+    const Recorder = (window as any).Recorder;
+    let rec: RecorderTypes = new Recorder(input, {
       numChannels: 1
     });
+
     rec.record();
     setRecorder(rec);
 
@@ -107,9 +127,9 @@ export default function useSpeechToText({
   };
 
   // Speech events for cross browser functionality
-  const handleSpeechEvents = ({ stream }) => {
+  const handleSpeechEvents = ({ stream }: { stream: MediaStream }) => {
     const harkOptions = {};
-    const speechEvents = window.hark(stream, harkOptions);
+    const speechEvents = (window as any).hark(stream, harkOptions);
 
     // Starts Recorder.js recording
     let rec = createAudioContext({ stream });
@@ -130,11 +150,12 @@ export default function useSpeechToText({
       rec.stop();
 
       // convert audio to WAV blob
-      rec.exportWAV(async blob => {
+      rec.exportWAV((blob: Blob) => {
         const reader = new FileReader();
         reader.readAsDataURL(blob);
         reader.onloadend = async () => {
-          const base64data = reader.result;
+          const base64data = reader.result as string;
+
           // gets raw base64 data
           audio.content = base64data.substr(base64data.indexOf(',') + 1);
 
@@ -162,7 +183,9 @@ export default function useSpeechToText({
         };
 
         // Google Cloud Config
-        const audio = {};
+        const audio = {
+          content: ''
+        };
         const config = {
           encoding: 'LINEAR16',
           languageCode: 'en-US'
@@ -184,7 +207,13 @@ export default function useSpeechToText({
   };
 
   // Stop audio recording if timeout prop
-  const handleTimeout = ({ rec, stream }) => {
+  const handleTimeout = ({
+    rec,
+    stream
+  }: {
+    rec: RecorderTypes;
+    stream: MediaStream;
+  }) => {
     if (timeout) {
       // Create and set new timeout
       let newTimeoutId = window.setTimeout(() => {
