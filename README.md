@@ -28,8 +28,8 @@ Also used is `hark.js` for detecting start and stopped speech events for browser
 
 ```JSX
   const {
-    startCapturing,
-    stopCapturing,
+    startSpeechToText,
+    stopSpeechToText,
     isRecording,
     results,
     error
@@ -137,7 +137,7 @@ Transcribed text from speech on successful speech-to-text transcription.
 
 <hr>
 
-### `startCapturing`
+### `startSpeechToText`
 
 Function to start microphone input recording. Will prompt user with microphone access permission if not previously granted.
 
@@ -145,7 +145,7 @@ Function to start microphone input recording. Will prompt user with microphone a
 
 <hr>
 
-### `stopCapturing`
+### `stopSpeechToText`
 
 Function to stop microphone input recording.
 
