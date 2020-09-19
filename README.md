@@ -6,9 +6,13 @@ By default, the `SpeechRecognition` web API is used which is currently only supp
 
 The `SpeechRecognition` API does not require any additional setup or API keys, everything works out of the box.
 
-# Live Code Sandbox Demo
+# Live Demo
 
-https://codesandbox.io/s/twilight-dream-ngk06
+As of 09/19/20 cross-browser speech to text tested and working on Chrome, firefox, Safari for Mac, iOS 13 and 14 Safari. Have not tested on Android but should work on chromium based android browsers.
+
+Unfortunately does not work on firefox or chrome on iOS due to apple only supporting `getUserMedia` on safari (thanks apple 💩)
+
+https://trusting-perlman-d246f0.netlify.app/
 
 # Cross Browser Support
 
@@ -18,9 +22,7 @@ This hook makes use of a customized version of `recorder.js` for recording audio
 
 The hook then converts the WAV audio blob returned from `recorder.js` and converts it into a `base64` string using the `FileReader` API. This is all needed in order to POST audio data to the Google Cloud Speech-to-Text REST API and get transcribed text returned all on the front-end.
 
-Also used is `hark.js` for detecting start and stopped speech events during cross-browser mode. For non cross-browser Chrome only mode, Chrome's Speech Recognition API handles start and stop speech events automatically.
-
-Both `recorder.js` and `hark.js` can be found in the `Public` folder.
+Also used is `hark.js` for detecting start and stopped speech events for browsers that don't support the `SpeechRecognition` API. If the `SpeechRecognition` API is available, `SpeechRecognition` API handles start and stop speech events automatically.
 
 # Basic Hook usage
 
@@ -40,7 +42,7 @@ Both `recorder.js` and `hark.js` can be found in the `Public` folder.
 
   return (
     <>
-      <button onClick={isRecording ? stopCapturing : startCapturing}>
+      <button onClick={isRecording ? stopSpeechToText : startSpeechToText}>
         {isRecording ? 'Stop Recording' : 'Start Recording'}
       </button>
       <ul>
@@ -54,15 +56,15 @@ Both `recorder.js` and `hark.js` can be found in the `Public` folder.
 
 # Arguments
 
-Arguments passed to `useSpeechToText()` invocation
+Arguments passed to `useSpeechToText` invocation
 
 ### `timeout`
 
 Sets amount in milliseconds to stop recording microphone input after last detected speech event.
 
-**Note**: `timeout` is only applied when `crossBrowser: true` arg is passed, else Chrome's Speech Recognition automatically stops recording after a certain amount of time.
+**Note**: `timeout` is only applied when `crossBrowser: true` arg is passed and using browser that does not support `SpeechRecognition` API, else Chrome's Speech Recognition automatically stops recording after a certain amount of time.
 
-- Type: `Number`
+- Type: `number`
 - Required: `false`
 - Default: `undefined`
 
@@ -72,7 +74,7 @@ Sets amount in milliseconds to stop recording microphone input after last detect
 
 Sets whether or not to keep recording microphone input after speech results are returned
 
-- Type: `Boolean`
+- Type: `boolean`
 - Required: `false`
 - Default: `undefined`
 
@@ -80,9 +82,9 @@ Sets whether or not to keep recording microphone input after speech results are 
 
 ### `onStartSpeaking`
 
-Callback function invoked on speech detection event.
+Callback function invoked on speech detection event. **Only invoked on browsers that do not support `SpeechRecognition` API**
 
-- Type: `Func`
+- Type: `() => any`
 - Required: `false`
 - Default: `undefined`
 
@@ -90,9 +92,9 @@ Callback function invoked on speech detection event.
 
 ### `onStopSpeaking`
 
-Callback function invoked on speech stopped event.
+Callback function invoked on speech stopped event. **Only invoked on browsers that do not support `SpeechRecognition` API**
 
-- Type: `Func`
+- Type: `() => any`
 - Required: `false`
 - Default: `undefined`
 
@@ -100,11 +102,11 @@ Callback function invoked on speech stopped event.
 
 ### `crossBrowser`
 
-Boolean to enable speech to text functionality on Chrome, Firefox, and Edge major browsers
+Boolean to enable speech to text functionality on browsers that do not support the `SpeechRecognition` API. Firefox, Safari, iOS Safari etc.
 
 **Note**: `googleApiKey` is required if using `crossBrowser` mode.
 
-- Type: `Boolean`
+- Type: `boolean`
 - Required: `false`
 - Default: `false`
 
@@ -114,7 +116,7 @@ Boolean to enable speech to text functionality on Chrome, Firefox, and Edge majo
 
 API key used for Google Cloud Speech to text API for cross browser speech to text functionality.
 
-- Type: `String`
+- Type: `string`
 - Required: `true` if `crossBrowser`
 - Default: `undefined`
 
@@ -130,7 +132,7 @@ ex: `const { results } = useSpeechToText()`
 
 Transcribed text from speech on successful speech-to-text transcription.
 
-- Type: `Array` of `String`
+- Type: `string[]`
 - Default: `[]`
 
 <hr>
@@ -139,7 +141,7 @@ Transcribed text from speech on successful speech-to-text transcription.
 
 Function to start microphone input recording. Will prompt user with microphone access permission if not previously granted.
 
-- Type: `Func`
+- Type: `() => Promise<void>`
 
 <hr>
 
@@ -147,7 +149,7 @@ Function to start microphone input recording. Will prompt user with microphone a
 
 Function to stop microphone input recording.
 
-- Type: `Func`
+- Type: `() => void`
 
 <hr>
 
@@ -155,7 +157,7 @@ Function to stop microphone input recording.
 
 Boolean to detect if an active recording is occurring.
 
-- Type: `Boolean`
+- Type: `boolean`
 - Default: `false`
 
 <hr>
@@ -164,8 +166,8 @@ Boolean to detect if an active recording is occurring.
 
 Error string if feature is not supported on current browser
 
-- Type: `String`
-- Default: `null`
+- Type: `string`
+- Default: `''`
 
 <hr>
 
@@ -179,8 +181,8 @@ import useSpeechToText from 'Hooks/useSpeechToText';
 
 export default function AnyComponent() {
   const {
-    startCapturing,
-    stopCapturing,
+    startSpeechToText,
+    stopSpeechToText,
     isRecording,
     results,
     error
@@ -194,7 +196,7 @@ export default function AnyComponent() {
   return (
     <div>
       <h1>Recording: {isRecording.toString()}</h1>
-      <button onClick={isRecording ? stopCapturing : startCapturing}>
+      <button onClick={isRecording ? stopSpeechToText : startSpeechToText}>
         {isRecording ? 'Stop Recording' : 'Start Recording'}
       </button>
       <ul>
@@ -213,8 +215,8 @@ Same as above example with slightly different args
 
 ```JSX
   const {
-    startCapturing,
-    stopCapturing,
+    startSpeechToText,
+    stopSpeechToText,
     isRecording,
     results,
     error
@@ -224,15 +226,4 @@ Same as above example with slightly different args
     crossBrowser: true,
     googleApiKey: YOUR_GOOGLE_CLOUD_API_KEY_HERE
   });
-```
-
-**Important**
-
-Cross-Browser mode makes use of a custom `recorder.js` and `hark.js` files for recording, converting audio streams, and speech events. These files must be included if planning to use cross browser mode.
-
-Both `recorder.js` and `hark.js` files can be found in the `Public` folder. These files are linked like normal script tags in `index.html`
-
-```HTML
-  <script src="./hark.js"></script>
-  <script src="./recorder.js"></script>
 ```
