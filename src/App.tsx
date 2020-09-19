@@ -8,8 +8,8 @@ import './App.css';
 
 export default function App() {
   const {
-    startCapturing,
-    stopCapturing,
+    startSpeechToText,
+    stopSpeechToText,
     isRecording,
     error,
     results
@@ -46,7 +46,7 @@ export default function App() {
       }}
     >
       <h1>Recording: {isRecording.toString()}</h1>
-      <button onClick={isRecording ? stopCapturing : startCapturing}>
+      <button onClick={isRecording ? stopSpeechToText : startSpeechToText}>
         <span>{isRecording ? 'Stop Recording' : 'Start Recording'}</span>
         <img data-recording={isRecording} src={micIcon} alt="" />
       </button>
