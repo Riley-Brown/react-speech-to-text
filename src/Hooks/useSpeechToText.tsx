@@ -1,74 +1,59 @@
 import { useState, useEffect, useRef } from 'react';
 
-// Not sure about these 🤷‍♂️
-export interface RecorderTypes {
-  record: () => void;
-  start: () => Promise<MediaStream | undefined>;
-  stop: () => void;
-  exportWAV: (blob: any) => void;
-}
+import Hark from 'hark';
+import { startRecording, stopRecording } from './recorderHelpers';
 
 const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
-const audioContext = new AudioContext();
 
 const SpeechRecognition =
   window.SpeechRecognition || (window as any).webkitSpeechRecognition;
-const recognition = SpeechRecognition ? new SpeechRecognition() : null;
+
+let recognition: SpeechRecognition;
+
+if (SpeechRecognition) {
+  recognition = new SpeechRecognition();
+}
 
 export interface UseSpeechToTextTypes {
-  googleApiKey?: string;
   continuous?: boolean;
   crossBrowser?: boolean;
+  googleApiKey?: string;
   onStartSpeaking?: () => any;
   onStoppedSpeaking?: () => any;
   timeout?: number;
 }
 
 export default function useSpeechToText({
-  googleApiKey,
   continuous,
   crossBrowser,
+  googleApiKey,
   onStartSpeaking,
   onStoppedSpeaking,
   timeout
 }: UseSpeechToTextTypes) {
-  const [audioStream, setAudioStream] = useState<MediaStream>();
   const [isRecording, setIsRecording] = useState(false);
-  const [recorder, setRecorder] = useState<RecorderTypes>();
+
+  const audioContextRef = useRef<AudioContext>();
+
   const [results, setResults] = useState<string[]>([]);
   const [error, setError] = useState('');
 
   const timeoutId = useRef<number>();
+  const mediaStream = useRef<MediaStream>();
 
   useEffect(() => {
     if (!crossBrowser && !recognition) {
       setError('Speech Recognition API is only available on Chrome');
     }
-    if (!audioContext) {
-      setError('Audio Context is not supported on this browser');
-    }
-  }, [audioContext, crossBrowser, recognition]);
 
-  const startCapturing = () => {
-    // Google Chrome Web Speech API
-    if (!crossBrowser && recognition) {
-      chromeSpeechRecognition();
-    } else {
-      // Cross Browser Speech to text using Google Cloud
-      navigator.mediaDevices
-        .getUserMedia({ audio: true, video: false })
-        .then(stream => {
-          setIsRecording(true);
-
-          // Initialize hark for start and stop speech events
-          handleSpeechEvents({ stream });
-        })
-        .catch(err => {
-          console.log(err);
-          setError('Microphone access was denied');
-        });
+    if (!navigator?.mediaDevices?.getUserMedia) {
+      setError('getUserMedia is not supported on this device/browser :(');
     }
-  };
+
+    if (!audioContextRef.current) {
+      audioContextRef.current = new AudioContext();
+    }
+  }, []);
 
   // Chrome Speech Recognition API:
   // Only supported on Chrome browsers
@@ -78,155 +63,168 @@ export default function useSpeechToText({
       if (continuous) recognition.continuous = true;
 
       // start recognition
-      setIsRecording(true);
       recognition.start();
 
       // speech successfully translated into text
-      recognition.onresult = e => {
+      recognition.onresult = (e) => {
         if (e.results) {
-          setResults(prevResults => [
+          setResults((prevResults) => [
             ...prevResults,
             e.results[e.results.length - 1][0].transcript
           ]);
         }
       };
 
-      // Audio stopped recording or timed out
+      recognition.onaudiostart = () => setIsRecording(true);
+
+      // Audio stopped recording or timed out.
+      // Chrome speech auto times-out if no speech after a while
       recognition.onaudioend = () => {
         setIsRecording(false);
       };
     }
   };
 
-  const stopCapturing = () => {
-    if (!crossBrowser && isRecording && recognition) {
-      recognition.stop();
-    } else if (recorder && audioStream) {
-      recorder.stop();
-      audioStream.getAudioTracks()[0].stop();
-      setIsRecording(false);
+  const startSpeechToText = async () => {
+    if (recognition) {
+      chromeSpeechRecognition();
+      return;
     }
-  };
 
-  const createAudioContext = ({ stream }: { stream: MediaStream }) => {
-    // Create new audio context source
-    let input = audioContext.createMediaStreamSource(stream);
+    if (!crossBrowser) {
+      return;
+    }
 
-    setAudioStream(stream);
-
-    // Start new Recorder instance
-    const Recorder = (window as any).Recorder;
-    let rec: RecorderTypes = new Recorder(input, {
-      numChannels: 1
+    const stream = await startRecording({
+      errHandler: () => setError('Microphone permission was denied'),
+      audioContext: audioContextRef.current as AudioContext
     });
 
-    rec.record();
-    setRecorder(rec);
+    // Stop recording if timeout
+    if (timeout) {
+      handleRecordingTimeout();
+    }
 
-    return rec;
-  };
+    // stop previous mediaStream track if exists
+    if (mediaStream.current) {
+      mediaStream.current.getAudioTracks()[0].stop();
+    }
 
-  // Speech events for cross browser functionality
-  const handleSpeechEvents = ({ stream }: { stream: MediaStream }) => {
-    const harkOptions = {};
-    const speechEvents = (window as any).hark(stream, harkOptions);
+    // Clones stream to fix hark bug on Safari
+    mediaStream.current = stream.clone();
 
-    // Starts Recorder.js recording
-    let rec = createAudioContext({ stream });
-    rec.record();
-
-    // Create timeout to stop recording
-    handleTimeout({ stream, rec });
+    const speechEvents = Hark(mediaStream.current, {
+      audioContext: audioContextRef.current as AudioContext
+    });
 
     speechEvents.on('speaking', () => {
       if (onStartSpeaking) onStartSpeaking();
 
-      // clear timeout
+      // Clear previous recording timeout on every speech event
       clearTimeout(timeoutId.current);
     });
 
     speechEvents.on('stopped_speaking', () => {
       if (onStoppedSpeaking) onStoppedSpeaking();
-      rec.stop();
 
-      // convert audio to WAV blob
-      rec.exportWAV((blob: Blob) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(blob);
-        reader.onloadend = async () => {
-          const base64data = reader.result as string;
+      setIsRecording(false);
+      mediaStream.current?.getAudioTracks()[0].stop();
 
-          // gets raw base64 data
-          audio.content = base64data.substr(base64data.indexOf(',') + 1);
-
-          // Send base64 data string to Google Cloud API
-          const response = await fetch(
-            `https://speech.googleapis.com/v1/speech:recognize?key=${googleApiKey}`,
-            {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify(data)
-            }
-          );
-          const responseJson = await response.json();
-
-          // Update results state with transcribed text
-          if (responseJson.results && responseJson.results.length > 0) {
-            console.log(responseJson.results[0].alternatives[0].transcript);
-            setResults(prevResults => [
-              ...prevResults,
-              responseJson.results[0].alternatives[0].transcript
-            ]);
-          }
-        };
-
-        // Google Cloud Config
-        const audio = {
-          content: ''
-        };
-        const config = {
-          encoding: 'LINEAR16',
-          languageCode: 'en-US'
-        };
-        const data = {
-          config,
-          audio
-        };
+      // Stops current recording and sends audio string to google cloud.
+      // recording will start again after google cloud api
+      // call if `continuous` prop is true. Until the api result
+      // returns, technically the microphone is not being captured again
+      stopRecording({
+        exportWAV: true,
+        wavCallback: (blob) =>
+          handleBlobToBase64({ blob, continuous: continuous || false })
       });
-
-      if (continuous) {
-        // create new audio context instance for continuous recording
-        rec = createAudioContext({ stream });
-      }
-
-      // New timeout after last speech detected
-      handleTimeout({ stream, rec });
     });
+
+    setIsRecording(true);
   };
 
-  // Stop audio recording if timeout prop
-  const handleTimeout = ({
-    rec,
-    stream
-  }: {
-    rec: RecorderTypes;
-    stream: MediaStream;
-  }) => {
-    if (timeout) {
-      // Create and set new timeout
-      let newTimeoutId = window.setTimeout(() => {
-        rec.stop();
-        stream.getAudioTracks()[0].stop();
-        setIsRecording(false);
-      }, timeout);
-
-      timeoutId.current = newTimeoutId;
-
-      return newTimeoutId;
+  const stopSpeechToText = () => {
+    if (recognition) {
+      recognition.stop();
+    } else {
+      setIsRecording(false);
+      mediaStream.current?.getAudioTracks()[0].stop();
+      stopRecording({
+        exportWAV: true,
+        wavCallback: (blob) => handleBlobToBase64({ blob, continuous: false })
+      });
     }
   };
 
-  return { results, startCapturing, stopCapturing, isRecording, error };
+  const handleRecordingTimeout = () => {
+    timeoutId.current = window.setTimeout(() => {
+      setIsRecording(false);
+      mediaStream.current?.getAudioTracks()[0].stop();
+      stopRecording({ exportWAV: false });
+    }, timeout);
+  };
+
+  const handleBlobToBase64 = ({
+    blob,
+    continuous
+  }: {
+    blob: Blob;
+    continuous: boolean;
+  }) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(blob);
+
+    reader.onloadend = async () => {
+      const base64data = reader.result as string;
+
+      let sampleRate = audioContextRef.current?.sampleRate;
+
+      // Google only accepts max 48000 sample rate: if
+      // greater recorder js will down-sample to 48000
+      if (sampleRate && sampleRate > 48000) {
+        sampleRate = 48000;
+      }
+
+      const audio = { content: '' };
+
+      const config = {
+        encoding: 'LINEAR16',
+        languageCode: 'en-US',
+        sampleRateHertz: sampleRate
+      };
+
+      const data = {
+        config,
+        audio
+      };
+
+      // Gets raw base 64 string data
+      audio.content = base64data.substr(base64data.indexOf(',') + 1);
+
+      const googleCloudRes = await fetch(
+        `https://speech.googleapis.com/v1/speech:recognize?key=${googleApiKey}`,
+        {
+          method: 'POST',
+          body: JSON.stringify(data)
+        }
+      );
+
+      const googleCloudJson = await googleCloudRes.json();
+
+      // Update results state with transcribed text
+      if (googleCloudJson.results?.length > 0) {
+        setResults((prevResults) => [
+          ...prevResults,
+          googleCloudJson.results[0].alternatives[0].transcript
+        ]);
+      }
+
+      if (continuous) {
+        startSpeechToText();
+      }
+    };
+  };
+
+  return { results, startSpeechToText, stopSpeechToText, isRecording, error };
 }
