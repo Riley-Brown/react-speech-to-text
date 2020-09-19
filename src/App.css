@@ -45,6 +45,7 @@ button {
   justify-content: center;
   align-items: center;
   margin: 10px auto;
+  box-shadow: 0 4px 10px 0 rgba(0, 0, 0, 0.4);
 }
 button img {
   border-radius: 50%;
