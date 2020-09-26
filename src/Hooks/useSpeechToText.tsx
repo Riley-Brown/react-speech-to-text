@@ -3,6 +3,8 @@ import { useState, useEffect, useRef } from 'react';
 import Hark from 'hark';
 import { startRecording, stopRecording } from './recorderHelpers';
 
+import { isEdgeChromium } from 'react-device-detect';
+
 const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
 
 const SpeechRecognition =
@@ -10,7 +12,7 @@ const SpeechRecognition =
 
 let recognition: SpeechRecognition;
 
-if (SpeechRecognition) {
+if (!isEdgeChromium && SpeechRecognition) {
   recognition = new SpeechRecognition();
 }
 
