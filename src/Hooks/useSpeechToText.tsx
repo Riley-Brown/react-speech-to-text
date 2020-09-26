@@ -12,6 +12,8 @@ const SpeechRecognition =
 
 let recognition: SpeechRecognition;
 
+// Chromium edge currently has a broken implementation
+// of the web speech API and does not return any results
 if (!isEdgeChromium && SpeechRecognition) {
   recognition = new SpeechRecognition();
 }
