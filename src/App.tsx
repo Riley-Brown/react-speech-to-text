@@ -1,6 +1,6 @@
 import React from 'react';
 
-import useSpeechToText from 'Hooks/useSpeechToText';
+import useSpeechToText from './Hooks';
 
 import micIcon from './mic.svg';
 
