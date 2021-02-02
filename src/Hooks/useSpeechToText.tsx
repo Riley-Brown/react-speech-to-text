@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import Hark from 'hark';
 import { startRecording, stopRecording } from './recorderHelpers';
 
-import { isEdgeChromium } from 'react-device-detect';
+const isEdgeChromium = navigator.userAgent.indexOf('Edg/') !== -1;
 
 const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
 
