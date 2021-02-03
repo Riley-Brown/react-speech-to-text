@@ -1,19 +1,33 @@
 import { useState, useEffect, useRef } from 'react';
-
 import Hark from 'hark';
 import { startRecording, stopRecording } from './recorderHelpers';
 
 const isEdgeChromium = navigator.userAgent.indexOf('Edg/') !== -1;
+
+interface BraveNavigator extends Navigator {
+  brave: {
+    isBrave: () => Promise<boolean>;
+  };
+}
 
 const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
 
 const SpeechRecognition =
   window.SpeechRecognition || (window as any).webkitSpeechRecognition;
 
-let recognition: SpeechRecognition;
+let recognition: SpeechRecognition | null;
 
-// Chromium edge currently has a broken implementation
-// of the web speech API and does not return any results
+// Set recognition back to null for brave browser due to promise resolving
+// after the conditional on line 31
+if ((navigator as BraveNavigator).brave) {
+  (navigator as BraveNavigator).brave.isBrave().then((bool) => {
+    if (bool) recognition = null;
+  });
+}
+
+// Chromium browsers will have the SpeechRecognition method
+// but do not implement the functionality due to google wanting 💰
+// this covers new Edge and line 22 covers Brave, the two most popular non-chrome chromium browsers
 if (!isEdgeChromium && SpeechRecognition) {
   recognition = new SpeechRecognition();
 }
@@ -97,6 +111,12 @@ export default function useSpeechToText({
 
     if (!crossBrowser) {
       return;
+    }
+
+    // Resume audio context due to google auto play policy
+    // https://developers.google.com/web/updates/2017/09/autoplay-policy-changes#webaudio
+    if (audioContextRef.current?.state === 'suspended') {
+      audioContextRef.current?.resume();
     }
 
     const stream = await startRecording({
