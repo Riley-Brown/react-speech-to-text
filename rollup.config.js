@@ -2,6 +2,7 @@ import typescript from 'rollup-plugin-typescript2';
 import pkg from './package.json';
 import commonjs from 'rollup-plugin-commonjs';
 import nodeResolve from 'rollup-plugin-node-resolve';
+import { terser } from 'rollup-plugin-terser';
 
 export default {
   input: 'src/Hooks/index.tsx',
@@ -19,6 +20,11 @@ export default {
     commonjs({
       namedExports: {
         'react-js': ['isValidElementType']
+      }
+    }),
+    terser({
+      format: {
+        comments: false
       }
     })
   ],
