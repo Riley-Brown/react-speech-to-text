@@ -400,21 +400,18 @@ InlineWorker.prototype.postMessage = function postMessage(data) {
 var inlineWorker = InlineWorker;
 
 class Recorder {
-  config = {
-    bufferLen: 4096,
-    numChannels: 1,
-    mimeType: 'audio/wav'
-  };
-
-  recording = false;
-
-  callbacks = {
-    getBuffer: [],
-    exportWAV: []
-  };
-
   constructor(source, cfg) {
-    Object.assign(this.config, cfg);
+    this.config = {
+      bufferLen: 4096,
+      numChannels: 1,
+      mimeType: 'audio/wav',
+      ...cfg
+    };
+    this.recording = false;
+    this.callbacks = {
+      getBuffer: [],
+      exportWAV: []
+    };
     this.context = source.context;
     this.node = (
       this.context.createScriptProcessor || this.context.createJavaScriptNode
@@ -425,7 +422,7 @@ class Recorder {
       this.config.numChannels
     );
 
-    this.node.onaudioprocess = e => {
+    this.node.onaudioprocess = (e) => {
       if (!this.recording) return;
 
       var buffer = [];
@@ -442,13 +439,13 @@ class Recorder {
     this.node.connect(this.context.destination); //this should not be necessary
 
     let self = {};
-    this.worker = new inlineWorker(function() {
+    this.worker = new inlineWorker(function () {
       let recLength = 0,
         recBuffers = [],
         sampleRate,
         numChannels;
 
-      this.onmessage = function(e) {
+      this.onmessage = function (e) {
         switch (e.data.command) {
           case 'init':
             init(e.data.config);
@@ -650,7 +647,7 @@ class Recorder {
       }
     });
 
-    this.worker.onmessage = e => {
+    this.worker.onmessage = (e) => {
       let cb = this.callbacks[e.data.command].pop();
       if (typeof cb == 'function') {
         cb(e.data.data);

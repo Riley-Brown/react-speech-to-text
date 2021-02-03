@@ -1,11 +1,7 @@
 export class Recorder {
     static forceDownload(blob: any, filename: any): void;
     constructor(source: any, cfg: any);
-    config: {
-        bufferLen: number;
-        numChannels: number;
-        mimeType: string;
-    };
+    config: any;
     recording: boolean;
     callbacks: {
         getBuffer: never[];
