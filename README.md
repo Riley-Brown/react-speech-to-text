@@ -1,18 +1,28 @@
-# React Hooks to transcribe microphone input to text.
+# React Hook to transcribe microphone input into text.
 
 This hook supports cross browser speech to text if the `crossBrowser: true` prop is passed.
 
-By default, the `SpeechRecognition` web API is used which is currently only supported by Chrome browsers.
+By default, the <a target="_blank" href="https://developer.mozilla.org/en-US/docs/Web/API/SpeechRecognition">SpeechRecognition API</a> is used which is currently only supported by Chrome browsers.
 
-The `SpeechRecognition` API does not require any additional setup or API keys, everything works out of the box.
+The SpeechRecognition API does not require any additional setup or API keys, everything works out of the box.
+
+# Install
+
+```
+npm i react-hook-speech-to-text
+```
+
+```
+yarn add react-hook-speech-to-text
+```
 
 # Live Demo
 
-As of 09/19/20 cross-browser speech to text tested and working on Chrome, firefox, Safari for Mac, iOS 13 and 14 Safari. Have not tested on Android but should work on chromium based android browsers.
+https://trusting-perlman-d246f0.netlify.app/
+
+As of 02/02/20 cross-browser speech to text tested and working on Chrome, firefox, Safari for Mac, iOS 13 and 14 Safari. Have not tested on Android but should work on chromium based android browsers.
 
 Unfortunately does not work on firefox or chrome on iOS due to apple only supporting `getUserMedia` on safari (thanks apple 💩)
-
-https://trusting-perlman-d246f0.netlify.app/
 
 # Cross Browser Support
 
@@ -24,34 +34,59 @@ The hook then converts the WAV audio blob returned from `recorder.js` and conver
 
 Also used is `hark.js` for detecting start and stopped speech events for browsers that don't support the `SpeechRecognition` API. If the `SpeechRecognition` API is available, `SpeechRecognition` API handles start and stop speech events automatically.
 
-# Basic Hook usage
+# Hook usage
 
 ```JSX
+import React from 'react';
+import useSpeechToText from 'react-hook-speech-to-text';
+
+export default function AnyComponent() {
   const {
-    startSpeechToText,
-    stopSpeechToText,
+    error,
     isRecording,
     results,
-    error
+    startSpeechToText,
+    stopSpeechToText,
   } = useSpeechToText({
+    continuous: true,
     timeout: 10000,
-    continuous: true
   });
 
   if (error) return <p>Web Speech API is not available in this browser 🤷‍</p>;
 
   return (
-    <>
+    <div>
+      <h1>Recording: {isRecording.toString()}</h1>
       <button onClick={isRecording ? stopSpeechToText : startSpeechToText}>
         {isRecording ? 'Stop Recording' : 'Start Recording'}
       </button>
       <ul>
-        {results.map(result => (
-          <li>{result}</li>
+        {results.map((result, index) => (
+          <li key={index}>{result}</li>
         ))}
       </ul>
-    </>
+    </div>
   );
+}
+```
+
+# Cross-browser mode
+
+Same code as above with `crossBrowser: true` and `googleApiKey` props passed
+
+```JSX
+  const {
+    error,
+    isRecording,
+    results,
+    startSpeechToText,
+    stopSpeechToText,
+  } = useSpeechToText({
+    continuous: true,
+    crossBrowser: true,
+    googleApiKey: YOUR_GOOGLE_CLOUD_API_KEY_HERE,
+    timeout: 10000,
+  });
 ```
 
 # Arguments
@@ -124,7 +159,7 @@ API key used for Google Cloud Speech to text API for cross browser speech to tex
 
 # Returned Values
 
-Values returns by the `useSpeechToText()` invocation
+Values returns by the `useSpeechToText()` hook
 
 ex: `const { results } = useSpeechToText()`
 
@@ -169,61 +204,20 @@ Error string if feature is not supported on current browser
 - Type: `string`
 - Default: `''`
 
-<hr>
+# Running project locally
 
-# Hook Usage
-
-### Non cross-browser Chrome only usage:
-
-```JSX
-import React from 'react';
-import useSpeechToText from 'Hooks/useSpeechToText';
-
-export default function AnyComponent() {
-  const {
-    startSpeechToText,
-    stopSpeechToText,
-    isRecording,
-    results,
-    error
-  } = useSpeechToText({
-    timeout: 10000,
-    continuous: true
-  });
-
-  if (error) return <p>Web Speech API is not available in this browser 🤷‍</p>;
-
-  return (
-    <div>
-      <h1>Recording: {isRecording.toString()}</h1>
-      <button onClick={isRecording ? stopSpeechToText : startSpeechToText}>
-        {isRecording ? 'Stop Recording' : 'Start Recording'}
-      </button>
-      <ul>
-        {results.map(result => (
-          <li>{result}</li>
-        ))}
-      </ul>
-    </div>
-  );
-}
+```
+npm run start
 ```
 
-### Cross-Browser usage
+# Building project locally
 
-Same as above example with slightly different args
+Code will be output to the `/dist` folder using rollup bundler
 
-```JSX
-  const {
-    startSpeechToText,
-    stopSpeechToText,
-    isRecording,
-    results,
-    error
-  } = useSpeechToText({
-    timeout: 10000,
-    continuous: true,
-    crossBrowser: true,
-    googleApiKey: YOUR_GOOGLE_CLOUD_API_KEY_HERE
-  });
 ```
+npm run build
+```
+
+# Contributing
+
+Feel free to open an issue on the repo with any bugs or feature requests, or fork and create a PR with fixes, features or improvements.
