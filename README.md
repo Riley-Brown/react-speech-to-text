@@ -6,6 +6,14 @@ By default, the <a target="_blank" href="https://developer.mozilla.org/en-US/doc
 
 The SpeechRecognition API does not require any additional setup or API keys, everything works out of the box.
 
+# Why use this package?
+
+- Written in TypeScript with full type support
+- 0 dependencies
+- Simple APIs
+- Cross-browser optional support
+- Small bundle size 11.9kB **(4.7kB gzipped)**
+
 # Install
 
 ```
