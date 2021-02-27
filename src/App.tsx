@@ -8,16 +8,16 @@ import './App.css';
 
 export default function App() {
   const {
-    startSpeechToText,
-    stopSpeechToText,
-    isRecording,
     error,
-    results
+    isRecording,
+    results,
+    startSpeechToText,
+    stopSpeechToText
   } = useSpeechToText({
-    timeout: 10000,
     continuous: true,
     crossBrowser: true,
-    googleApiKey: process.env.REACT_APP_API_KEY
+    googleApiKey: process.env.REACT_APP_API_KEY,
+    timeout: 10000
   });
 
   if (error) {
