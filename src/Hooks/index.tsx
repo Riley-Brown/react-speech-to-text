@@ -2,6 +2,18 @@ import { useState, useEffect, useRef } from 'react';
 import Hark from 'hark';
 import { startRecording, stopRecording } from './recorderHelpers';
 
+// https://cloud.google.com/speech-to-text/docs/reference/rest/v1/RecognitionConfig
+import { GoogleCloudRecognitionConfig } from './GoogleCloudRecognitionConfig';
+
+// https://developer.mozilla.org/en-US/docs/Web/API/SpeechRecognition
+export interface SpeechRecognitionProperties {
+  // continuous: do not pass continuous here, instead pass it as a param to the hook
+  grammars?: SpeechGrammarList;
+  interimResults?: boolean;
+  lang?: string;
+  maxAlternatives?: number;
+}
+
 const isEdgeChromium = navigator.userAgent.indexOf('Edg/') !== -1;
 
 interface BraveNavigator extends Navigator {
@@ -36,8 +48,10 @@ export interface UseSpeechToTextTypes {
   continuous?: boolean;
   crossBrowser?: boolean;
   googleApiKey?: string;
+  googleCloudRecognitionConfig?: GoogleCloudRecognitionConfig;
   onStartSpeaking?: () => any;
   onStoppedSpeaking?: () => any;
+  speechRecognitionProperties?: SpeechRecognitionProperties;
   timeout?: number;
 }
 
@@ -45,8 +59,10 @@ export default function useSpeechToText({
   continuous,
   crossBrowser,
   googleApiKey,
+  googleCloudRecognitionConfig,
   onStartSpeaking,
   onStoppedSpeaking,
+  speechRecognitionProperties,
   timeout
 }: UseSpeechToTextTypes) {
   const [isRecording, setIsRecording] = useState(false);
@@ -79,6 +95,21 @@ export default function useSpeechToText({
     if (recognition) {
       // Continuous recording after stopped speaking event
       if (continuous) recognition.continuous = true;
+
+      if (speechRecognitionProperties) {
+        const {
+          grammars,
+          interimResults,
+          lang,
+          maxAlternatives
+        } = speechRecognitionProperties;
+
+        if (grammars) recognition.grammars = grammars;
+        if (lang) recognition.lang = lang;
+
+        recognition.interimResults = interimResults || false;
+        recognition.maxAlternatives = maxAlternatives || 1;
+      }
 
       // start recognition
       recognition.start();
@@ -212,10 +243,11 @@ export default function useSpeechToText({
 
       const audio = { content: '' };
 
-      const config = {
+      const config: GoogleCloudRecognitionConfig = {
         encoding: 'LINEAR16',
         languageCode: 'en-US',
-        sampleRateHertz: sampleRate
+        sampleRateHertz: sampleRate,
+        ...googleCloudRecognitionConfig
       };
 
       const data = {
