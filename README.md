@@ -165,6 +165,50 @@ API key used for Google Cloud Speech to text API for cross browser speech to tex
 
 <hr>
 
+### `googleCloudRecognitionConfig`
+
+**Thanks to https://github.com/iwgx for the suggestion https://github.com/Riley-Brown/react-speech-to-text/issues/2**
+
+Optional config object to have more control over the google cloud speech settings. These options will only be passed if using `crossBrowser: true` on browsers not supporting SpeechRecognition API. All options can be found here https://cloud.google.com/speech-to-text/docs/reference/rest/v1/RecognitionConfig
+
+- Type: `GoogleCloudRecognitionConfig`
+- Required: `false`
+- Default: `undefined`
+
+ex:
+
+```jsx
+const { results } = useSpeechToText({
+  crossBrowser: true,
+  googleApiKey: process.env.REACT_APP_API_KEY,
+  googleCloudRecognitionConfig: {
+    languageCode: 'en-US'
+  }
+});
+```
+
+<hr>
+
+### `speechRecognitionProperties`
+
+Optional object of properties to have more control over Google Chrome's SpeechRecognition API. These properties only apply on browsers that support Google Chrome's SpeechRecognition API. All properties can be found here https://developer.mozilla.org/en-US/docs/Web/API/SpeechRecognition#properties
+
+- Type: `SpeechRecognitionProperties`
+- Required: `false`
+- Default: `undefined`
+
+ex:
+
+```jsx
+const { results } = useSpeechToText({
+  speechRecognitionProperties: {
+    lang: 'en-US'
+  }
+});
+```
+
+<hr>
+
 # Returned Values
 
 Values returns by the `useSpeechToText()` hook
