@@ -14,8 +14,9 @@ export interface UseSpeechToTextTypes {
     onStoppedSpeaking?: () => any;
     speechRecognitionProperties?: SpeechRecognitionProperties;
     timeout?: number;
+    useOnlyGoogleCloud?: boolean;
 }
-export default function useSpeechToText({ continuous, crossBrowser, googleApiKey, googleCloudRecognitionConfig, onStartSpeaking, onStoppedSpeaking, speechRecognitionProperties, timeout }: UseSpeechToTextTypes): {
+export default function useSpeechToText({ continuous, crossBrowser, googleApiKey, googleCloudRecognitionConfig, onStartSpeaking, onStoppedSpeaking, speechRecognitionProperties, timeout, useOnlyGoogleCloud }: UseSpeechToTextTypes): {
     results: string[];
     startSpeechToText: () => Promise<void>;
     stopSpeechToText: () => void;
