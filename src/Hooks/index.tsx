@@ -53,6 +53,7 @@ export interface UseSpeechToTextTypes {
   onStoppedSpeaking?: () => any;
   speechRecognitionProperties?: SpeechRecognitionProperties;
   timeout?: number;
+  useOnlyGoogleCloud?: boolean;
 }
 
 export default function useSpeechToText({
@@ -63,7 +64,8 @@ export default function useSpeechToText({
   onStartSpeaking,
   onStoppedSpeaking,
   speechRecognitionProperties,
-  timeout
+  timeout,
+  useOnlyGoogleCloud = false
 }: UseSpeechToTextTypes) {
   const [isRecording, setIsRecording] = useState(false);
 
@@ -82,6 +84,12 @@ export default function useSpeechToText({
 
     if (!navigator?.mediaDevices?.getUserMedia) {
       setError('getUserMedia is not supported on this device/browser :(');
+    }
+
+    if ((crossBrowser || useOnlyGoogleCloud) && !googleApiKey) {
+      console.error(
+        'No google cloud API key was passed, google API will not be able to process speech'
+      );
     }
 
     if (!audioContextRef.current) {
@@ -135,12 +143,12 @@ export default function useSpeechToText({
   };
 
   const startSpeechToText = async () => {
-    if (recognition) {
+    if (!useOnlyGoogleCloud && recognition) {
       chromeSpeechRecognition();
       return;
     }
 
-    if (!crossBrowser) {
+    if (!crossBrowser && !useOnlyGoogleCloud) {
       return;
     }
 
@@ -200,7 +208,7 @@ export default function useSpeechToText({
   };
 
   const stopSpeechToText = () => {
-    if (recognition) {
+    if (recognition && !useOnlyGoogleCloud) {
       recognition.stop();
     } else {
       setIsRecording(false);

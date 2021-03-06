@@ -160,7 +160,7 @@ Boolean to enable speech to text functionality on browsers that do not support t
 API key used for Google Cloud Speech to text API for cross browser speech to text functionality.
 
 - Type: `string`
-- Required: `true` if `crossBrowser`
+- Required: `true` if `crossBrowser` or `useOnlyGoogleCloud`
 - Default: `undefined`
 
 <hr>
@@ -169,7 +169,7 @@ API key used for Google Cloud Speech to text API for cross browser speech to tex
 
 **Thanks to https://github.com/iwgx for the suggestion https://github.com/Riley-Brown/react-speech-to-text/issues/2**
 
-Optional config object to have more control over the google cloud speech settings. These options will only be passed if using `crossBrowser: true` on browsers not supporting SpeechRecognition API. All options can be found here https://cloud.google.com/speech-to-text/docs/reference/rest/v1/RecognitionConfig
+Optional config object to have more control over the google cloud speech settings. These options will only be passed if using `crossBrowser: true` on browsers not supporting SpeechRecognition API, or on all browsers if passing `useOnlyGoogleCloud: true`. All options can be found here https://cloud.google.com/speech-to-text/docs/reference/rest/v1/RecognitionConfig
 
 - Type: `GoogleCloudRecognitionConfig`
 - Required: `false`
@@ -206,6 +206,18 @@ const { results } = useSpeechToText({
   }
 });
 ```
+
+<hr>
+
+### `useOnlyGoogleCloud`
+
+Boolean to force use of google cloud engine speech-to-text even on browsers that support built in SpeechRecognition API. By default, this package will try to use SpeechRecognition where available since it is free for Chrome and will provide faster results than the cross-browser google cloud engine speech-to-text method. Overwrite this functionality if you want to only use google cloud for more consistent functionality.
+
+Note: if setting to true, you must pass a valid google cloud speech to text API key or no results will be returned.
+
+- Type: `boolean`
+- Required: `false`
+- Default: `false`
 
 <hr>
 
