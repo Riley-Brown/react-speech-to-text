@@ -9,6 +9,7 @@ import './App.css';
 export default function App() {
   const {
     error,
+    interimResult,
     isRecording,
     results,
     startSpeechToText,
@@ -17,6 +18,7 @@ export default function App() {
     continuous: true,
     crossBrowser: true,
     googleApiKey: process.env.REACT_APP_API_KEY,
+    speechRecognitionProperties: { interimResults: true },
     timeout: 10000
   });
 
@@ -54,6 +56,7 @@ export default function App() {
         {results.map((result, index) => (
           <li key={index}>{result}</li>
         ))}
+        {interimResult && <li>{interimResult}</li>}
       </ul>
     </div>
   );
