@@ -72,6 +72,7 @@ export default function useSpeechToText({
   const audioContextRef = useRef<AudioContext>();
 
   const [results, setResults] = useState<string[]>([]);
+  const [interimResult, setInterimResult] = useState<string | undefined>();
   const [error, setError] = useState('');
 
   const timeoutId = useRef<number>();
@@ -104,31 +105,40 @@ export default function useSpeechToText({
       // Continuous recording after stopped speaking event
       if (continuous) recognition.continuous = true;
 
-      if (speechRecognitionProperties) {
-        const {
-          grammars,
-          interimResults,
-          lang,
-          maxAlternatives
-        } = speechRecognitionProperties;
+      const { grammars, interimResults, lang, maxAlternatives } =
+        speechRecognitionProperties || {};
 
-        if (grammars) recognition.grammars = grammars;
-        if (lang) recognition.lang = lang;
+      if (grammars) recognition.grammars = grammars;
+      if (lang) recognition.lang = lang;
 
-        recognition.interimResults = interimResults || false;
-        recognition.maxAlternatives = maxAlternatives || 1;
-      }
+      recognition.interimResults = interimResults || false;
+      recognition.maxAlternatives = maxAlternatives || 1;
 
       // start recognition
       recognition.start();
 
       // speech successfully translated into text
       recognition.onresult = (e) => {
-        if (e.results) {
-          setResults((prevResults) => [
-            ...prevResults,
-            e.results[e.results.length - 1][0].transcript
-          ]);
+        const result = e.results[e.results.length - 1];
+        const { transcript } = result[0];
+
+        // Allows for realtime speech result UI feedback
+        if (interimResults) {
+          if (result.isFinal) {
+            setInterimResult(undefined);
+            setResults((prevResults) => [...prevResults, transcript]);
+          } else {
+            let concatTranscripts = '';
+
+            // If continuous: e.results will include previous speech results: need to start loop at the current event resultIndex for proper concatenation
+            for (let i = e.resultIndex; i < e.results.length; i++) {
+              concatTranscripts += e.results[i][0].transcript;
+            }
+
+            setInterimResult(concatTranscripts);
+          }
+        } else {
+          setResults((prevResults) => [...prevResults, transcript]);
         }
       };
 
@@ -136,7 +146,7 @@ export default function useSpeechToText({
 
       // Audio stopped recording or timed out.
       // Chrome speech auto times-out if no speech after a while
-      recognition.onaudioend = () => {
+      recognition.onend = () => {
         setIsRecording(false);
       };
     }
@@ -290,5 +300,12 @@ export default function useSpeechToText({
     };
   };
 
-  return { results, startSpeechToText, stopSpeechToText, isRecording, error };
+  return {
+    error,
+    interimResult,
+    isRecording,
+    results,
+    startSpeechToText,
+    stopSpeechToText
+  };
 }
