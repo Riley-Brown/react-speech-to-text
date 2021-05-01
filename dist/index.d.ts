@@ -17,9 +17,10 @@ export interface UseSpeechToTextTypes {
     useOnlyGoogleCloud?: boolean;
 }
 export default function useSpeechToText({ continuous, crossBrowser, googleApiKey, googleCloudRecognitionConfig, onStartSpeaking, onStoppedSpeaking, speechRecognitionProperties, timeout, useOnlyGoogleCloud }: UseSpeechToTextTypes): {
+    error: string;
+    interimResult: string | undefined;
+    isRecording: boolean;
     results: string[];
     startSpeechToText: () => Promise<void>;
     stopSpeechToText: () => void;
-    isRecording: boolean;
-    error: string;
 };
