@@ -1,5 +1,7 @@
 # React Hook to transcribe microphone input into text.
 
+![Demo](demo.gif)
+
 This hook supports cross browser speech to text if the `crossBrowser: true` prop is passed.
 
 By default, the <a target="_blank" href="https://developer.mozilla.org/en-US/docs/Web/API/SpeechRecognition">SpeechRecognition API</a> is used which is currently only supported by Chrome browsers.
@@ -55,9 +57,11 @@ export default function AnyComponent() {
     results,
     startSpeechToText,
     stopSpeechToText,
+    interimResult
   } = useSpeechToText({
     continuous: true,
     timeout: 10000,
+    speechRecognitionProperties: { interimResults: true }
   });
 
   if (error) return <p>Web Speech API is not available in this browser 🤷‍</p>;
@@ -72,6 +76,7 @@ export default function AnyComponent() {
         {results.map((result, index) => (
           <li key={index}>{result}</li>
         ))}
+        {interimResult && <li>{interimResult}</li>}
       </ul>
     </div>
   );
@@ -200,9 +205,10 @@ Optional object of properties to have more control over Google Chrome's SpeechRe
 ex:
 
 ```jsx
-const { results } = useSpeechToText({
+const { results, interimResult } = useSpeechToText({
   speechRecognitionProperties: {
-    lang: 'en-US'
+    lang: 'en-US',
+    interimResults: true // Allows for displaying real-time speech results
   }
 });
 ```
@@ -233,6 +239,15 @@ Transcribed text from speech on successful speech-to-text transcription.
 
 - Type: `string[]`
 - Default: `[]`
+
+<hr>
+
+### `interimResult`
+
+Real-time speech result only for `SpeechRecognition` web API if opting-in using `speechRecognitionProperties: { interimResults: true }` config prop. Will update using the partial results returned from the web API and gets set back to `undefined` on final speech result.
+
+- Type: `string` | `undefined`
+- Default: `undefined`
 
 <hr>
 
