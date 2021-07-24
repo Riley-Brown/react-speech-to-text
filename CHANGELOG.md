@@ -1,3 +1,12 @@
+# 0.7.0
+
+- Add new `useLegacyResults` hook arg to opt into new array of objects results
+- Add new array of objects results containing timestamp, transcript and speechBlob properties for each speech result
+- Add default `timeout` value of 10000
+- Add default `speechRecognitionProperties` value of `{ interimResults: true }` for displaying realtime speech to text result
+
+It is recommended to opt into new results by passing `useLegacyResults: false` as the legacy array of string results will be completely removed in a future version
+
 # 0.6.0
 
 - Added functionality to return real-time speech result while speaking for `SpeechRecognition` web API
