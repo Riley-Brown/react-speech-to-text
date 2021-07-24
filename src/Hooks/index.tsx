@@ -29,6 +29,12 @@ const SpeechRecognition =
 
 let recognition: SpeechRecognition | null;
 
+export type ResultType = {
+  speechBlob?: Blob;
+  timestamp: number;
+  transcript: string;
+};
+
 // Set recognition back to null for brave browser due to promise resolving
 // after the conditional on line 31
 if ((navigator as BraveNavigator).brave) {
@@ -53,6 +59,7 @@ export interface UseSpeechToTextTypes {
   onStoppedSpeaking?: () => any;
   speechRecognitionProperties?: SpeechRecognitionProperties;
   timeout?: number;
+  useLegacyResults?: boolean;
   useOnlyGoogleCloud?: boolean;
 }
 
@@ -63,15 +70,18 @@ export default function useSpeechToText({
   googleCloudRecognitionConfig,
   onStartSpeaking,
   onStoppedSpeaking,
-  speechRecognitionProperties,
-  timeout,
-  useOnlyGoogleCloud = false
+  speechRecognitionProperties = { interimResults: true },
+  timeout = 10000,
+  useOnlyGoogleCloud = false,
+  useLegacyResults = true
 }: UseSpeechToTextTypes) {
   const [isRecording, setIsRecording] = useState(false);
 
   const audioContextRef = useRef<AudioContext>();
 
-  const [results, setResults] = useState<string[]>([]);
+  const [legacyResults, setLegacyResults] = useState<string[]>([]);
+  const [results, setResults] = useState<ResultType[]>([]);
+
   const [interimResult, setInterimResult] = useState<string | undefined>();
   const [error, setError] = useState('');
 
@@ -95,6 +105,12 @@ export default function useSpeechToText({
 
     if (!audioContextRef.current) {
       audioContextRef.current = new AudioContext();
+    }
+
+    if (useLegacyResults) {
+      console.warn(
+        'react-hook-speech-to-text is using legacy results, pass useLegacyResults: false to the hook to use the new array of objects results. Legacy array of strings results will be removed in a future version.'
+      );
     }
   }, []);
 
@@ -122,11 +138,17 @@ export default function useSpeechToText({
         const result = e.results[e.results.length - 1];
         const { transcript } = result[0];
 
+        const timestamp = Math.floor(Date.now() / 1000);
+
         // Allows for realtime speech result UI feedback
         if (interimResults) {
           if (result.isFinal) {
             setInterimResult(undefined);
-            setResults((prevResults) => [...prevResults, transcript]);
+            setResults((prevResults) => [
+              ...prevResults,
+              { transcript, timestamp }
+            ]);
+            setLegacyResults((prevResults) => [...prevResults, transcript]);
           } else {
             let concatTranscripts = '';
 
@@ -138,7 +160,11 @@ export default function useSpeechToText({
             setInterimResult(concatTranscripts);
           }
         } else {
-          setResults((prevResults) => [...prevResults, transcript]);
+          setResults((prevResults) => [
+            ...prevResults,
+            { transcript, timestamp }
+          ]);
+          setLegacyResults((prevResults) => [...prevResults, transcript]);
         }
       };
 
@@ -288,9 +314,17 @@ export default function useSpeechToText({
 
       // Update results state with transcribed text
       if (googleCloudJson.results?.length > 0) {
+        const { transcript } = googleCloudJson.results[0].alternatives[0];
+
+        setLegacyResults((prevResults) => [...prevResults, transcript]);
+
         setResults((prevResults) => [
           ...prevResults,
-          googleCloudJson.results[0].alternatives[0].transcript
+          {
+            speechBlob: blob,
+            transcript,
+            timestamp: Math.floor(Date.now() / 1000)
+          }
         ]);
       }
 
@@ -304,7 +338,7 @@ export default function useSpeechToText({
     error,
     interimResult,
     isRecording,
-    results,
+    results: useLegacyResults ? legacyResults : results,
     startSpeechToText,
     stopSpeechToText
   };
