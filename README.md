@@ -259,6 +259,8 @@ type ResultType = {
 
 **Important**: When passing `useLegacyResults: false`, results will return the new `ResultType[]` array of objects. It is recommended to opt into the new results ASAP as the legacy results will be completely removed in a future version.
 
+Note: `speechBlob` will only be returned when using google cloud speech to text API as Chrome's SpeechRecognition API does not provide access to the captured microphone data
+
 <hr>
 
 ### `interimResult`
