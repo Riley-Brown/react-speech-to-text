@@ -53,15 +53,14 @@ import useSpeechToText from 'react-hook-speech-to-text';
 export default function AnyComponent() {
   const {
     error,
+    interimResult,
     isRecording,
     results,
     startSpeechToText,
     stopSpeechToText,
-    interimResult
   } = useSpeechToText({
     continuous: true,
-    timeout: 10000,
-    speechRecognitionProperties: { interimResults: true }
+    useLegacyResults: false
   });
 
   if (error) return <p>Web Speech API is not available in this browser 🤷‍</p>;
@@ -73,8 +72,8 @@ export default function AnyComponent() {
         {isRecording ? 'Stop Recording' : 'Start Recording'}
       </button>
       <ul>
-        {results.map((result, index) => (
-          <li key={index}>{result}</li>
+        {results.map((result) => (
+          <li key={result.timestamp}>{result.transcript}</li>
         ))}
         {interimResult && <li>{interimResult}</li>}
       </ul>
@@ -98,8 +97,8 @@ Same code as above with `crossBrowser: true` and `googleApiKey` props passed
     continuous: true,
     crossBrowser: true,
     googleApiKey: YOUR_GOOGLE_CLOUD_API_KEY_HERE,
-    timeout: 10000,
-  });
+    useLegacyResults: false
+});
 ```
 
 # Arguments
@@ -114,7 +113,7 @@ Sets amount in milliseconds to stop recording microphone input after last detect
 
 - Type: `number`
 - Required: `false`
-- Default: `undefined`
+- Default: `10000`
 
 <hr>
 
@@ -200,7 +199,7 @@ Optional object of properties to have more control over Google Chrome's SpeechRe
 
 - Type: `SpeechRecognitionProperties`
 - Required: `false`
-- Default: `undefined`
+- Default: `{ interimResults: true }`
 
 ex:
 
@@ -227,6 +226,16 @@ Note: if setting to true, you must pass a valid google cloud speech to text API 
 
 <hr>
 
+### `useLegacyResults`
+
+Boolean to return legacy array of string results or the new array of object results. Recommended to pass `useLegacyResults: false` as the legacy array of strings results will be removed in a future version.
+
+- Type: `boolean`
+- Required: `false`
+- Default: `false`
+
+<hr>
+
 # Returned Values
 
 Values returns by the `useSpeechToText()` hook
@@ -237,8 +246,18 @@ ex: `const { results } = useSpeechToText()`
 
 Transcribed text from speech on successful speech-to-text transcription.
 
-- Type: `string[]`
+- Type: `string[] | ResultType[]`
 - Default: `[]`
+
+```typescript
+type ResultType = {
+  speechBlob?: Blob;
+  timestamp: number;
+  transcript: string;
+};
+```
+
+**Important**: When passing `useLegacyResults: false`, results will return the new `ResultType[]` array of objects. It is recommended to opt into the new results ASAP as the legacy results will be completely removed in a future version.
 
 <hr>
 
