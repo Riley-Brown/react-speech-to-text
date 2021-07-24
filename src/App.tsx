@@ -1,6 +1,6 @@
 import React from 'react';
 
-import useSpeechToText from './Hooks';
+import useSpeechToText, { ResultType } from './Hooks';
 
 import micIcon from './mic.svg';
 
@@ -19,7 +19,7 @@ export default function App() {
     crossBrowser: true,
     googleApiKey: process.env.REACT_APP_API_KEY,
     speechRecognitionProperties: { interimResults: true },
-    timeout: 10000
+    useLegacyResults: false
   });
 
   if (error) {
@@ -53,8 +53,8 @@ export default function App() {
         <img data-recording={isRecording} src={micIcon} alt="" />
       </button>
       <ul>
-        {results.map((result, index) => (
-          <li key={index}>{result}</li>
+        {(results as ResultType[]).map((result) => (
+          <li key={result.timestamp}>{result.transcript}</li>
         ))}
         {interimResult && <li>{interimResult}</li>}
       </ul>
