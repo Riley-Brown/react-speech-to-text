@@ -5,6 +5,11 @@ export interface SpeechRecognitionProperties {
     lang?: string;
     maxAlternatives?: number;
 }
+export declare type ResultType = {
+    speechBlob?: Blob;
+    timestamp: number;
+    transcript: string;
+};
 export interface UseSpeechToTextTypes {
     continuous?: boolean;
     crossBrowser?: boolean;
@@ -14,13 +19,14 @@ export interface UseSpeechToTextTypes {
     onStoppedSpeaking?: () => any;
     speechRecognitionProperties?: SpeechRecognitionProperties;
     timeout?: number;
+    useLegacyResults?: boolean;
     useOnlyGoogleCloud?: boolean;
 }
-export default function useSpeechToText({ continuous, crossBrowser, googleApiKey, googleCloudRecognitionConfig, onStartSpeaking, onStoppedSpeaking, speechRecognitionProperties, timeout, useOnlyGoogleCloud }: UseSpeechToTextTypes): {
+export default function useSpeechToText({ continuous, crossBrowser, googleApiKey, googleCloudRecognitionConfig, onStartSpeaking, onStoppedSpeaking, speechRecognitionProperties, timeout, useOnlyGoogleCloud, useLegacyResults }: UseSpeechToTextTypes): {
     error: string;
     interimResult: string | undefined;
     isRecording: boolean;
-    results: string[];
+    results: string[] | ResultType[];
     startSpeechToText: () => Promise<void>;
     stopSpeechToText: () => void;
 };
