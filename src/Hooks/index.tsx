@@ -199,14 +199,17 @@ export default function useSpeechToText({
       audioContext: audioContextRef.current as AudioContext
     });
 
+    setIsRecording(true);
+
     // Stop recording if timeout
     if (timeout) {
+      clearTimeout(timeoutId.current);
       handleRecordingTimeout();
     }
 
     // stop previous mediaStream track if exists
     if (mediaStream.current) {
-      mediaStream.current.getAudioTracks()[0].stop();
+      stopMediaStream();
     }
 
     // Clones stream to fix hark bug on Safari
@@ -226,9 +229,6 @@ export default function useSpeechToText({
     speechEvents.on('stopped_speaking', () => {
       if (onStoppedSpeaking) onStoppedSpeaking();
 
-      setIsRecording(false);
-      mediaStream.current?.getAudioTracks()[0].stop();
-
       // Stops current recording and sends audio string to google cloud.
       // recording will start again after google cloud api
       // call if `continuous` prop is true. Until the api result
@@ -239,8 +239,6 @@ export default function useSpeechToText({
           handleBlobToBase64({ blob, continuous: continuous || false })
       });
     });
-
-    setIsRecording(true);
   };
 
   const stopSpeechToText = () => {
@@ -248,7 +246,7 @@ export default function useSpeechToText({
       recognition.stop();
     } else {
       setIsRecording(false);
-      mediaStream.current?.getAudioTracks()[0].stop();
+      stopMediaStream();
       stopRecording({
         exportWAV: true,
         wavCallback: (blob) => handleBlobToBase64({ blob, continuous: false })
@@ -259,7 +257,7 @@ export default function useSpeechToText({
   const handleRecordingTimeout = () => {
     timeoutId.current = window.setTimeout(() => {
       setIsRecording(false);
-      mediaStream.current?.getAudioTracks()[0].stop();
+      stopMediaStream();
       stopRecording({ exportWAV: false });
     }, timeout);
   };
@@ -330,8 +328,15 @@ export default function useSpeechToText({
 
       if (continuous) {
         startSpeechToText();
+      } else {
+        stopMediaStream();
+        setIsRecording(false);
       }
     };
+  };
+
+  const stopMediaStream = () => {
+    mediaStream.current?.getAudioTracks()[0].stop();
   };
 
   return {
@@ -339,6 +344,7 @@ export default function useSpeechToText({
     interimResult,
     isRecording,
     results: useLegacyResults ? legacyResults : results,
+    setResults,
     startSpeechToText,
     stopSpeechToText
   };
