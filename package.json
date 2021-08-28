@@ -1,6 +1,6 @@
 {
   "name": "react-hook-speech-to-text",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "private": false,
   "main": "dist/index.js",
   "license": "MIT",
@@ -9,8 +9,8 @@
   "description": "Simple cross-browser speech to text using react hooks.",
   "dependencies": {},
   "peerDependencies": {
-    "react": "^16.8.0",
-    "react-dom": "^16.8.0"
+    "react": ">=16.8.0",
+    "react-dom": ">=16.8.0"
   },
   "files": [
     "dist"
