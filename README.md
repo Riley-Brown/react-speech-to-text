@@ -263,6 +263,16 @@ Note: `speechBlob` will only be returned when using google cloud speech to text 
 
 <hr>
 
+### `setResults`
+
+React setState function to manually set the results state array
+
+**Thanks to https://github.com/marharyta for the suggestion https://github.com/Riley-Brown/react-speech-to-text/issues/12**
+
+- Type: `React.Dispatch<React.SetStateAction<ResultType[]>>`
+
+<hr>
+
 ### `interimResult`
 
 Real-time speech result only for `SpeechRecognition` web API if opting-in using `speechRecognitionProperties: { interimResults: true }` config prop. Will update using the partial results returned from the web API and gets set back to `undefined` on final speech result.
