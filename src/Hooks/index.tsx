@@ -50,11 +50,22 @@ if (!isEdgeChromium && SpeechRecognition) {
   recognition = new SpeechRecognition();
 }
 
+type FetchData = {
+  /**
+   * base64 audio data
+   */
+  audio: string;
+  config?: GoogleCloudRecognitionConfig; 
+}
 export interface UseSpeechToTextTypes {
   continuous?: boolean;
   crossBrowser?: boolean;
   googleApiKey?: string;
   googleCloudRecognitionConfig?: GoogleCloudRecognitionConfig;
+  /**
+   * @returns Response - should include same data structure as google cloud speech recognition
+   */
+  customFetch?: (data: FetchData , blob) => Response;
   onStartSpeaking?: () => any;
   onStoppedSpeaking?: () => any;
   speechRecognitionProperties?: SpeechRecognitionProperties;
@@ -68,6 +79,7 @@ export default function useSpeechToText({
   crossBrowser,
   googleApiKey,
   googleCloudRecognitionConfig,
+  customFetch,
   onStartSpeaking,
   onStoppedSpeaking,
   speechRecognitionProperties = { interimResults: true },
@@ -300,13 +312,16 @@ export default function useSpeechToText({
       // Gets raw base 64 string data
       audio.content = base64data.substr(base64data.indexOf(',') + 1);
 
-      const googleCloudRes = await fetch(
+      const hasCustomFetchMethod = Boolean(customFetch);
+      const fetchCustomMethod = async () => await customFetch(data, blob);
+      const fetchGoogleCloud = async () => await fetch(
         `https://speech.googleapis.com/v1/speech:recognize?key=${googleApiKey}`,
         {
           method: 'POST',
           body: JSON.stringify(data)
         }
-      );
+        );
+      const googleCloudRes = hasCustomFetchMethod ? await fetchGoogleCloud() : await fetchCustomMethod();
 
       const googleCloudJson = await googleCloudRes.json();
 
